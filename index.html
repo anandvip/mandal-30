@@ -175,6 +175,23 @@
             display: none;
             margin-top: 10px;
         }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--secondary-color);
+            color: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -237,6 +254,8 @@
         </div>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
         let trackerData = {
             mandalaName: '',
@@ -247,6 +266,15 @@
             themeColor: '#2ecc71',
             history: []
         };
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
 
         function setupTracker() {
             trackerData.mandalaName = document.getElementById('mandalaName').value;
@@ -277,6 +305,7 @@
 
             saveToLocalStorage();
             setDailyReminder();
+            showToast(`Tracker setup for "${trackerData.mandalaName}" - ${trackerData.duration} days`);
         }
 
         function generateTracker() {
@@ -318,6 +347,9 @@
             checkMilestones();
             checkCompletion();
             saveToLocalStorage();
+            showToast(trackerData.sessions[index].completed ? 
+                `Session ${index + 1} marked as completed` : 
+                `Session ${index + 1} marked as incomplete`);
         }
 
         function updateSessionDisplay() {
@@ -376,7 +408,7 @@
                 const weekDiv = document.createElement('div');
                 weekDiv.className = 'week';
 
-                for (let j = i; j < Math.min(i + 7, trackerData.duration); j++) {
+               for (let j = i; j < Math.min(i + 7, trackerData.duration); j++) {
                     const dayDiv = document.createElement('div');
                     dayDiv.className = 'day-circle';
                     if (trackerData.sessions[j * 2].completed && trackerData.sessions[j * 2 + 1].completed) {
@@ -387,6 +419,7 @@
 
                 weeklyOverview.appendChild(weekDiv);
             }
+            showToast('Weekly overview updated');
         }
 
         function openNotesModal(index) {
@@ -395,6 +428,7 @@
             textarea.value = trackerData.sessions[index].notes;
             modal.style.display = 'block';
             modal.dataset.sessionIndex = index;
+            showToast(`Opened notes for session ${index + 1}`);
         }
 
         function saveNotes() {
@@ -405,6 +439,7 @@
             modal.style.display = 'none';
             updateSessionDisplay();
             saveToLocalStorage();
+            showToast(`Notes saved for session ${index + 1}`);
         }
 
         function exportData() {
@@ -415,6 +450,7 @@
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
+            showToast('Data exported successfully');
         }
 
         function updateDetailedStats() {
@@ -448,6 +484,7 @@
                 statBox.innerHTML = `<h3>${stat.label}</h3><p>${stat.value}</p>`;
                 statsContainer.appendChild(statBox);
             });
+            showToast('Detailed statistics updated');
         }
 
         function calculateLongestStreak() {
@@ -491,7 +528,7 @@
 
             const achievedMilestone = milestones.find(m => completedSessions === m.threshold * 2);
             if (achievedMilestone) {
-                alert(achievedMilestone.message);
+                showToast(achievedMilestone.message);
             }
         }
 
@@ -515,6 +552,7 @@
             const index = Math.floor(Math.random() * prompts.length);
             document.getElementById('meditationPrompt').textContent = prompts[index];
             document.getElementById('meditationAudio').src = audioFiles[index];
+            showToast('New guided meditation loaded');
         }
 
         function shareProgress() {
@@ -525,6 +563,7 @@
             
             // This is a simple implementation. In a real-world scenario, you'd integrate with social media APIs.
             alert("Sharing: " + shareText);
+            showToast('Progress shared');
         }
 
         function setDailyReminder() {
@@ -540,6 +579,7 @@
                                 new Notification("Meditation Reminder", { body: "Time for your evening meditation session!" });
                             }
                         }, 3600000); // Check every hour
+                        showToast('Daily reminders set');
                     }
                 });
             }
@@ -547,6 +587,7 @@
 
         function saveToLocalStorage() {
             localStorage.setItem('meditationTrackerData', JSON.stringify(trackerData));
+            showToast('Progress saved');
         }
 
         function loadFromLocalStorage() {
@@ -571,12 +612,14 @@
                 document.getElementById('shareButton').style.display = 'block';
                 
                 checkCompletion();  // Check if the loaded mandala is already complete
+                showToast('Previous session loaded');
             }
         }
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             saveToLocalStorage();
+            showToast(document.body.classList.contains('dark-mode') ? 'Dark mode enabled' : 'Light mode enabled');
         }
 
         function checkCompletion() {
@@ -585,7 +628,7 @@
             
             if (today >= trackerData.endDate || allSessionsCompleted) {
                 const completionMessage = `Congratulations! You've completed your "${trackerData.mandalaName}" meditation practice.`;
-                alert(completionMessage);
+                showToast(completionMessage);
                 
                 // Capture the completed mandala in history
                 const completedMandala = {
@@ -603,7 +646,7 @@
                 if (confirm("Would you like to start a new mandala?")) {
                     resetTracker();
                 } else {
-                    alert("You can start a new mandala anytime by clicking the 'Start New Mandala' button.");
+                    showToast("You can start a new mandala anytime by clicking the 'Start New Mandala' button.");
                 }
                 
                 // Update the UI to show the history
@@ -631,6 +674,7 @@
             document.getElementById('startDate').valueAsDate = new Date();
             
             saveToLocalStorage();
+            showToast('Tracker reset. Ready to start a new mandala');
         }
 
         function updateMandalaHistory() {
@@ -658,6 +702,7 @@
                 `;
                 historyContainer.appendChild(mandalaDiv);
             });
+            showToast('Mandala history updated');
         }
 
         function recreateMandala(index) {
@@ -684,9 +729,10 @@
             document.getElementById('weeklyOverview').style.display = 'block';
             document.getElementById('stats').style.display = 'block';
             document.getElementById('guidedMeditation').style.display = 'block';
-            document.getElementById('shareButton').style.display = 'block';
+             document.getElementById('shareButton').style.display = 'block';
 
             saveToLocalStorage();
+            showToast(`Recreated mandala: ${trackerData.mandalaName}`);
         }
 
         function deleteMandala(index) {
@@ -694,6 +740,7 @@
                 trackerData.history.splice(index, 1);
                 saveToLocalStorage();
                 updateMandalaHistory();
+                showToast('Mandala deleted from history');
             }
         }
 
@@ -718,8 +765,10 @@
                 }
                 sessionHistoryDiv.innerHTML = sessionHTML;
                 sessionHistoryDiv.style.display = 'block';
+                showToast('Session history displayed');
             } else {
                 sessionHistoryDiv.style.display = 'none';
+                showToast('Session history hidden');
             }
         }
 
@@ -730,6 +779,7 @@
                 if (confirm("Are you sure you want to start a new mandala? Your current progress will be saved in the history.")) {
                     checkCompletion();  // This will save the current mandala to history
                     resetTracker();
+                    showToast('Ready to start a new mandala');
                 }
             };
             document.body.appendChild(button);
@@ -738,12 +788,14 @@
         // Event listeners
         document.querySelector('.close').onclick = function() {
             document.getElementById('notesModal').style.display = 'none';
+            showToast('Notes modal closed');
         }
 
         window.onclick = function(event) {
             const modal = document.getElementById('notesModal');
             if (event.target == modal) {
                 modal.style.display = 'none';
+                showToast('Notes modal closed');
             }
         }
 
@@ -756,6 +808,23 @@
         }
         addNewMandalaButton();
         updateMandalaHistory();
+        showToast('Meditation Tracker initialized');
+
+        // Audio event listeners
+        const meditationAudio = document.getElementById('meditationAudio');
+        meditationAudio.addEventListener('play', () => showToast('Guided meditation audio started'));
+        meditationAudio.addEventListener('pause', () => showToast('Guided meditation audio paused'));
+        meditationAudio.addEventListener('ended', () => showToast('Guided meditation audio completed'));
+
+        // Input event listeners
+        document.getElementById('mandalaName').addEventListener('input', () => showToast('Editing mandala name'));
+        document.getElementById('duration').addEventListener('change', () => showToast('Changed meditation duration'));
+        document.getElementById('startDate').addEventListener('change', () => showToast('Changed start date'));
+
+        // Prevent accidental page refresh
+        window.onbeforeunload = function() {
+            return "Are you sure you want to leave? Your meditation progress will be saved, but you'll need to reload the page to continue.";
+        };
     </script>
 </body>
 </html>
